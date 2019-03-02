@@ -1,0 +1,8 @@
+bag = rosbag('~/Desktop/20190122_01_imu_check_lxdd.bag');
+
+imuSel = select(bag,'Topic','/imu/data');
+gtSel = select(bag,'Topic','/navsat/odom');
+
+imuStructs = readMessages(imuSel,'DataFormat','struct');
+gtStructs =  = readMessages(gtSel,'DataFormat';'struct');
+
