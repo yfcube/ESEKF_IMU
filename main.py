@@ -20,8 +20,8 @@ def load_imu_parameters():
 
 
 def main():
-    imu_data = np.loadtxt('./data/imu_noise.txt')
-    gt_data = np.loadtxt('./data/traj_gt.txt')
+    imu_data = np.loadtxt('./matlab/imudata.txt')
+    gt_data = np.loadtxt('./matlab/gtdata.txt')
 
     imu_parameters = load_imu_parameters()
 

@@ -7,7 +7,7 @@ imuCell = readMessages(imuSel);
 gtCell = readMessages(gtSel);
 
 imudata = zeros(length(imuCell),7);
-gtdata = zeros(length(gtCell),8);
+gtdata = zeros(length(gtCell),11);
 for i=1:length(imuCell)
     imudata(i,1) = imuCell{i}.Header.Stamp.Sec+imuCell{i}.Header.Stamp.Nsec*1e-9;
     imudata(i,2) = imuCell{i}.AngularVelocity.X;
@@ -27,10 +27,13 @@ for i = 1:length(gtCell)
     gtdata(i,6) = gtCell{i}.Pose.Pose.Orientation.Y;
     gtdata(i,7) = gtCell{i}.Pose.Pose.Orientation.Z;
     gtdata(i,8) = gtCell{i}.Pose.Pose.Orientation.W;
+    gtdata(i,9) = gtCell{i}.Twist.Twist.Linear.X;
+    gtdata(i,10) = gtCell{i}.Twist.Twist.Linear.Y;
+    gtdata(i,11) = gtCell{i}.Twist.Twist.Linear.Z;
 end
 
 imuFormat = '%f %f %f %f %f %f %f\n';
-gtFormat  = '%f %f %f %f %f %f %f %f\n';
+gtFormat  = '%f %f %f %f %f %f %f %f %f %f %f\n';
 
 imuFile = fopen('imudata.txt','w');
 gtFile = fopen('gtdata.txt','w');
