@@ -29,4 +29,14 @@ for i = 1:length(gtCell)
     gtdata(i,8) = gtCell{i}.Pose.Pose.Orientation.W;
 end
 
+imuFormat = '%f %f %f %f %f %f %f\n';
+gtFormat  = '%f %f %f %f %f %f %f %f\n';
 
+imuFile = fopen('imudata.txt','w');
+gtFile = fopen('gtdata.txt','w');
+
+fprintf(imuFile,imuFormat, imudata');
+fprintf(gtFile,gtFormat, gtdata');
+
+fclose(imuFile);
+fclose(gtFile);
