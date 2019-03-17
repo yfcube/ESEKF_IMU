@@ -87,7 +87,6 @@ def main():
     sigma_measurement[0:3, 0:3] *= sigma_measurement_p**2
     sigma_measurement[3:6, 3:6] *= sigma_measurement_q**2
 
-
     latest_gt_data
     go_on = True
     while go_on:
@@ -97,14 +96,26 @@ def main():
             continue
         if data_type==1:
             # print("Preditction at ", data[0])
-            last_preditct_time = data[0]
+            # last_preditct_time = data[0]
+            estimator.predict(data)
         elif data_type==2:
             latest_gt_data = data
         
         last_preditct_time = estimator.getLastPreditcTime()
         if latest_gt_data[0]>0.1 and (abs(last_preditct_time-latest_gt_data[0])<0.005) :
-            print("Correction: ", latest_gt_data[0], " on ", last_preditct_time)
-            latest_gt_data[0] = 0
+            print("last_cor_data:\n ", latest_gt_data.shape, latest_gt_data)
+            estimator.update(latest_gt_data[1:8], sigma_measurement) 
+
+        # print('[%f]:' % last_preditct_time, estimator.nominal_state)
+        frame_pose = np.zeros(8,)
+        frame_pose[0] = last_preditct_time
+        frame_pose[1:] = estimator.nominal_state[:7]
+        traj_est.append(frame_pose)
+    
+    # save trajectory to TUM format
+    traj_est = np.array(traj_est)
+    np.savetxt('./data/traj_gt_out.txt', gt_data[:, :8])
+    np.savetxt('./data/traj_esekf_out.txt', traj_est)
     # for i in range(1, imu_data.shape[0]):
     #     timestamp = imu_data[i, 0]
     #     estimator.predict(imu_data[i, :])

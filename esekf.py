@@ -45,6 +45,8 @@ class ESEKF(object):
 
         self.last_predict_time = init_time
 
+        print("init_nominal: ", self.nominal_state) 
+
     def predict(self, imu_measurement: np.array):
         """
         :param imu_measurement: [t, w_m, a_m]
@@ -169,6 +171,9 @@ class ESEKF(object):
         delta_q = tr.quaternion_multiply(tr.quaternion_conjugate(q), gt_q)
         if delta_q[0] < 0:
             delta_q *= -1
+        print('q: ',q)
+        print('gt_q: ',gt_q)
+        print("delta_q:",delta_q)
         angle = math.asin(la.norm(delta_q[1:4]))
         if math.isclose(angle, 0):
             axis = np.zeros(3,)
@@ -225,7 +230,10 @@ class ESEKF(object):
         # use the zero-order integration to integrate the quaternion.
         # q_{n+1} = q_n x q{(w_m - w_b) * dt}
         angle = la.norm(w_m)
-        axis = w_m / angle
+        if angle < 1e-8:
+            axis = np.array([1,0,0,0])
+        else:
+            axis = w_m / angle
         R_w = tr.rotation_matrix(0.5 * dt * angle, axis)
         q_w = tr.quaternion_from_matrix(R_w, True)
         q_half_next = tr.quaternion_multiply(q, q_w)
@@ -258,7 +266,10 @@ class ESEKF(object):
         self.nominal_state[:3] = p_next.reshape(3,)
         self.nominal_state[3:7] = q_next
         self.nominal_state[7:10] = v_next.reshape(3,)
+
         # print(q_next)
+        if q_next[1] == float('nan'):
+            exit()
 
     def __predict_error_covar(self, imu_measurement: np.array):
         w_m = imu_measurement[1:4]
