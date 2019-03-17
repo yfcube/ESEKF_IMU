@@ -14,11 +14,13 @@ class ImuParameters:
 
 
 class ESEKF(object):
-    def __init__(self, init_nominal_state: np.array, imu_parameters: ImuParameters):
+    def __init__(self, init_nominal_state: np.array, imu_parameters: ImuParameters, init_time: float):
         """
         :param init_nominal_state: [ p, q, v, a_b, w_b, g ], a 19x1 or 1x19 vector
         :param imu_parameters: imu parameters
         """
+        self.predicted_since_start = False
+        self.init_time = init_time
         self.nominal_state = init_nominal_state
         if self.nominal_state[3] < 0:
             self.nominal_state[3:7] *= 1    # force the quaternion has a positive real part.
@@ -41,7 +43,7 @@ class ESEKF(object):
         # initialize error covariance matrix
         self.error_covar = 0.01 * self.noise_covar
 
-        self.last_predict_time = 0.0
+        self.last_predict_time = init_time
 
     def predict(self, imu_measurement: np.array):
         """
@@ -50,7 +52,11 @@ class ESEKF(object):
         """
         if self.last_predict_time == imu_measurement[0]:
             return
+        # if self.init_time > 0.1:
+        #     imu_measurement[0] = self.init_time
+        #     self.init_time = 0
         # we predict error_covar first, because __predict_nominal_state will change the nominal state.
+        self.predicted_since_start = True
         self.__predict_error_covar(imu_measurement)
         self.__predict_nominal_state(imu_measurement)
         self.last_predict_time = imu_measurement[0]  # update timestamp
@@ -137,6 +143,8 @@ class ESEKF(object):
         
         ground_truth - nominal_state = delta = H @ error_state + noise
         """
+        if not self.predicted_since_start:
+            return
         H = np.zeros((6, 18))
         H[0:3, 0:3] = np.eye(3)
         H[3:6, 3:6] = np.eye(3)
@@ -284,3 +292,5 @@ class ESEKF(object):
         Qc_dt = 0.5*dt*self.noise_covar
         self.error_covar = Phi @ (self.error_covar + Qc_dt) @ Phi.T + Qc_dt
 
+    def getLastPreditcTime(self):
+        return self.last_predict_time

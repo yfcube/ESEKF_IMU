@@ -2,17 +2,17 @@ disp('Loading rosbag file ...');
 bag = rosbag('~/Desktop/20190122_01_imu_check_lxdd.bag');
 
 disp('Selecting messages by topic names ...');
-imuSel = select(bag,'Topic','imu', 'Time',[bag.StartTime+92,bag.EndTime]);
-imunovSel = select(bag,'Topic','imu/data','Time',[bag.StartTime+92,bag.EndTime]);
-gtSel = select(bag,'Topic','navsat/odom','Time',[bag.StartTime+92,bag.EndTime]);
+imuSel = select(bag,'Topic','imu');
+imunovSel = select(bag,'Topic','/imu/data','Time',[bag.StartTime+92,bag.EndTime]);
+gtSel = select(bag,'Topic','/navsat/odom');
 
 imuCell = readMessages(imuSel);
 imunovCell = readMessages(imunovSel);
 gtCell = readMessages(gtSel);
 
 disp('Parsing selected messages ...');
-% idx = 1:2:length(imuCell);
-imudata = zeros(length(imuCell),7);
+idx = 1:2:length(imuCell);
+imudata = zeros(length(idx),7);
 imunovdata = zeros(length(imunovCell),7);
 gtdata = zeros(length(gtCell),11);
 
@@ -26,7 +26,7 @@ for i=1:length(imunovCell)
     imunovdata(i,7) = imunovCell{i}.LinearAcceleration.Z;
 end
 
-for i=1:length(imuCell)
+for i=idx
     imudata(i,1) = imuCell{i}.Header.Stamp.Sec+imuCell{i}.Header.Stamp.Nsec*1e-9;
     imudata(i,2) = imuCell{i}.AngularVelocity.X;
     imudata(i,3) = imuCell{i}.AngularVelocity.Y;
