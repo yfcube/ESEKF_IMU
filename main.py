@@ -20,16 +20,17 @@ def load_imu_parameters():
 
 
 def main():
-    imu_data = np.loadtxt('./matlab/imudata.txt')
+    imu_data = np.loadtxt('./matlab/imunovdata.txt')
     gt_data = np.loadtxt('./matlab/gtdata.txt')
 
     imu_parameters = load_imu_parameters()
 
     init_nominal_state = np.zeros((19,))
     init_nominal_state[:10] = gt_data[0, 1:]                # init p, q, v
+    print("init state: ", init_nominal_state)
     init_nominal_state[10:13] = 0                           # init ba
     init_nominal_state[13:16] = 0                           # init bg
-    init_nominal_state[16:19] = np.array([0, 0, -9.81])     # init g
+    init_nominal_state[16:19] = np.array([0, 0, 0])     # init g
     estimator = ESEKF(init_nominal_state, imu_parameters)
 
     test_duration_s = [0., 61.]
@@ -49,23 +50,24 @@ def main():
     sigma_measurement = np.eye(6)
     sigma_measurement[0:3, 0:3] *= sigma_measurement_p**2
     sigma_measurement[3:6, 3:6] *= sigma_measurement_q**2
+    return 
     for i in range(1, imu_data.shape[0]):
         timestamp = imu_data[i, 0]
         estimator.predict(imu_data[i, :])
-        if i % update_ratio == 0:
-            # we assume the timestamps are aligned.
-            assert math.isclose(gt_data[i, 0], timestamp)
-            gt_pose = gt_data[i, 1:8].copy()  # gt_pose = [p, q]
-            # add position noise
-            gt_pose[:3] += np.random.randn(3,) * sigma_measurement_p
-            # add rotation noise, u = [1, 0.5 * noise_angle_axis]
-            # u = 0.5 * np.random.randn(4,) * sigma_measurement_q
-            # u[0] = 1
-            u = np.random.randn(3, ) * sigma_measurement_q
-            qn = tr.quaternion_about_axis(la.norm(u), u / la.norm(u))
-            gt_pose[3:] = tr.quaternion_multiply(gt_pose[3:], qn)
-            # update filter by measurement.
-            estimator.update(gt_pose, sigma_measurement)
+        # if 0: #i % update_ratio == 0:
+        #     # we assume the timestamps are aligned.
+        #     assert math.isclose(gt_data[i, 0], timestamp)
+        #     gt_pose = gt_data[i, 1:8].copy()  # gt_pose = [p, q]
+        #     # add position noise
+        #     gt_pose[:3] += np.random.randn(3,) * sigma_measurement_p
+        #     # add rotation noise, u = [1, 0.5 * noise_angle_axis]
+        #     # u = 0.5 * np.random.randn(4,) * sigma_measurement_q
+        #     # u[0] = 1
+        #     u = np.random.randn(3, ) * sigma_measurement_q
+        #     qn = tr.quaternion_about_axis(la.norm(u), u / la.norm(u))
+        #     gt_pose[3:] = tr.quaternion_multiply(gt_pose[3:], qn)
+        #     # update filter by measurement.
+        #     estimator.update(gt_pose, sigma_measurement)
 
         print('[%f]:' % timestamp, estimator.nominal_state)
         frame_pose = np.zeros(8,)
