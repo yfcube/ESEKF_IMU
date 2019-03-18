@@ -63,7 +63,7 @@ class ESEKF(object):
         self.__predict_nominal_state(imu_measurement)
         self.last_predict_time = imu_measurement[0]  # update timestamp
 
-    def __update_legacy(self, gt_measurement: np.array, measurement_covar: np.array):
+    def update_legacy(self, gt_measurement: np.array, measurement_covar: np.array):
         """
         An old implementation of the updating procedure.
         :param gt_measurement: [p, q], a 7x1 or 1x7 vector
@@ -109,8 +109,15 @@ class ESEKF(object):
         """
         if gt_measurement[3] < 0:
             gt_measurement[3:7] *= -1
+
+        z = gt_measurement.reshape(-1, 1) - Hx @ self.nominal_state.reshape(-1, 1)
+        q = self.nominal_state[3:7]
+        gt_q = gt_measurement[3:7]
+        dq= tr.quaternion_multiply(tr.quaternion_conjugate(q), gt_q).reshape(-1,1)
+
+        print
         # NOTE: subtracting quaternion directly is tricky. that's why we abandon this implementation.
-        errors = K @ (gt_measurement.reshape(-1, 1) - Hx @ self.nominal_state.reshape(-1, 1))
+        errors = K @ z
 
         # inject errors to the nominal state
         self.nominal_state[0:3] += errors[0:3, 0]  # update position

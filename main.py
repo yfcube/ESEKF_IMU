@@ -82,12 +82,15 @@ def main():
     traj_est = [gt_data[0, :8]]
     update_ratio = 3    # control the frequency of ekf updating.
     sigma_measurement_p = 0.02   # in meters
-    sigma_measurement_q = 0.015  # in rad
-    sigma_measurement = np.eye(6)
-    sigma_measurement[0:3, 0:3] *= sigma_measurement_p**2
-    sigma_measurement[3:6, 3:6] *= sigma_measurement_q**2
+    sigma_measurement_q = 0.001  # in rad
+    # sigma_measurement = np.eye(6)
+    # sigma_measurement[0:3, 0:3] *= sigma_measurement_p**2
+    # sigma_measurement[3:6, 3:6] *= sigma_measurement_q**2
 
-    latest_gt_data
+    sigma_measurement = np.eye(7)
+    sigma_measurement[0:3, 0:3] *= sigma_measurement_p**2
+    sigma_measurement[3:7, 3:7] *= sigma_measurement_q**2
+
     go_on = True
     while go_on:
         state, data_type, data = data_process.getLatestData()
@@ -103,8 +106,7 @@ def main():
         
         last_preditct_time = estimator.getLastPreditcTime()
         if latest_gt_data[0]>0.1 and (abs(last_preditct_time-latest_gt_data[0])<0.005) :
-            print("last_cor_data:\n ", latest_gt_data.shape, latest_gt_data)
-            estimator.update(latest_gt_data[1:8], sigma_measurement) 
+            estimator.update_legacy(latest_gt_data[1:8], sigma_measurement) 
 
         # print('[%f]:' % last_preditct_time, estimator.nominal_state)
         frame_pose = np.zeros(8,)
@@ -116,35 +118,6 @@ def main():
     traj_est = np.array(traj_est)
     np.savetxt('./data/traj_gt_out.txt', gt_data[:, :8])
     np.savetxt('./data/traj_esekf_out.txt', traj_est)
-    # for i in range(1, imu_data.shape[0]):
-    #     timestamp = imu_data[i, 0]
-    #     estimator.predict(imu_data[i, :])
-        # if 0: #i % update_ratio == 0:
-        #     # we assume the timestamps are aligned.
-        #     assert math.isclose(gt_data[i, 0], timestamp)
-        #     gt_pose = gt_data[i, 1:8].copy()  # gt_pose = [p, q]
-        #     # add position noise
-        #     gt_pose[:3] += np.random.randn(3,) * sigma_measurement_p
-        #     # add rotation noise, u = [1, 0.5 * noise_angle_axis]
-        #     # u = 0.5 * np.random.randn(4,) * sigma_measurement_q
-        #     # u[0] = 1
-        #     u = np.random.randn(3, ) * sigma_measurement_q
-        #     qn = tr.quaternion_about_axis(la.norm(u), u / la.norm(u))
-        #     gt_pose[3:] = tr.quaternion_multiply(gt_pose[3:], qn)
-        #     # update filter by measurement.
-        #     estimator.update(gt_pose, sigma_measurement)
-
-    #     print('[%f]:' % timestamp, estimator.nominal_state)
-    #     frame_pose = np.zeros(8,)
-    #     frame_pose[0] = timestamp
-    #     frame_pose[1:] = estimator.nominal_state[:7]
-    #     traj_est.append(frame_pose)
-
-    # # save trajectory to TUM format
-    # traj_est = np.array(traj_est)
-    # np.savetxt('./data/traj_gt_out.txt', gt_data[:, :8])
-    # np.savetxt('./data/traj_esekf_out.txt', traj_est)
-
 
 if __name__ == '__main__':
     main()
